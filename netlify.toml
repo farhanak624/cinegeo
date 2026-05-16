@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # NEXT_PUBLIC_* variables are intentionally public (exposed to the browser by Next.js convention).
+  # Exclude from secrets scanning to prevent false positives.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SITE_URL"
+  # The deno-cli plugin cache contains third-party type definitions that may incidentally
+  # match env var values; exclude that path from scanning.
+  SECRETS_SCAN_OMIT_PATHS = ".netlify/plugins/deno-cli"
