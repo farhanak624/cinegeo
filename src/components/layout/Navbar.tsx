@@ -2,24 +2,49 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Film, Menu, X, Globe } from "lucide-react";
+import { Film, Menu, X, Globe, LogOut, User } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const pathname = usePathname();
   const locale = useLocale();
+  const router = useRouter();
   const t = useTranslations("nav");
+  const supabase = createClient();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Get current user
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push(`/${locale}`);
+    router.refresh();
+  };
 
   const navLinks = [
     { href: `/${locale}`, label: t("home") },
@@ -80,13 +105,28 @@ export default function Navbar() {
             <span>{locale === "en" ? "ქარ" : "ENG"}</span>
           </Link>
 
-          {/* Auth Button */}
-          <Link
-            href={`/${locale}/auth`}
-            className="btn-primary hidden !px-5 !py-2 md:inline-flex"
-          >
-            {t("login")}
-          </Link>
+          {/* Auth Buttons */}
+          {user ? (
+            <div className="hidden items-center gap-3 md:flex">
+              <div className="flex items-center gap-2 text-sm text-text-secondary">
+                <User size={14} />
+                <span className="max-w-[120px] truncate">{user.email}</span>
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-1.5 rounded-pill border border-white/10 px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent-primary/50 hover:text-accent-primary"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href={`/${locale}/auth`}
+              className="btn-primary hidden !px-5 !py-2 md:inline-flex"
+            >
+              {t("login")}
+            </Link>
+          )}
 
           {/* Mobile Menu Toggle */}
           <button
@@ -122,13 +162,25 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href={`/${locale}/auth`}
-              onClick={() => setMobileOpen(false)}
-              className="btn-primary mt-2 w-full text-center"
-            >
-              {t("login")}
-            </Link>
+            {user ? (
+              <>
+                <p className="text-sm text-text-muted">{user.email}</p>
+                <button
+                  onClick={() => { handleSignOut(); setMobileOpen(false); }}
+                  className="btn-secondary w-full text-center"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                href={`/${locale}/auth`}
+                onClick={() => setMobileOpen(false)}
+                className="btn-primary mt-2 w-full text-center"
+              >
+                {t("login")}
+              </Link>
+            )}
           </nav>
         </motion.div>
       )}
