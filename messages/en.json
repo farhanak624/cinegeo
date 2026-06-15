@@ -85,7 +85,20 @@
     "googleAuth": "Continue with Google",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
-    "magicLinkSent": "Check your email for the magic link!"
+    "magicLinkSent": "Check your email for the magic link!",
+    "checkEmail": "Check your email",
+    "checkEmailDesc": "We've sent a confirmation link to",
+    "checkEmailAction": "Click the link in your email to verify your account.",
+    "resendEmail": "Resend confirmation email",
+    "resendIn": "Resend in",
+    "backToSignIn": "Back to sign in",
+    "passwordMin": "At least 6 characters",
+    "passwordMatch": "Passwords match",
+    "passwordMismatch": "Passwords don't match",
+    "alreadyRegistered": "This email is already registered. Try signing in instead.",
+    "emailNotConfirmed": "Please verify your email before signing in.",
+    "didntGetEmail": "Didn't get the email? Check your spam folder or",
+    "orSignIn": "or"
   },
   "admin": {
     "dashboard": "Dashboard",

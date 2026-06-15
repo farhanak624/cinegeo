@@ -4,10 +4,14 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  const token_hash = searchParams.get("token_hash");
+  const type = searchParams.get("type");
   const next = searchParams.get("next") ?? "/en";
 
+  const supabase = await createClient();
+
+  // Handle PKCE flow (OAuth, magic link)
   if (code) {
-    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
@@ -15,6 +19,19 @@ export async function GET(request: Request) {
     }
   }
 
-  // If there's an error or no code, redirect to auth page
+  // Handle email verification link (token_hash + type)
+  if (token_hash && type) {
+    const { error } = await supabase.auth.verifyOtp({
+      token_hash,
+      type: type as "email" | "signup" | "recovery" | "email_change",
+    });
+
+    if (!error) {
+      // Email verified successfully — redirect to homepage
+      return NextResponse.redirect(`${origin}/en`);
+    }
+  }
+
+  // If there's an error or no code/token, redirect to auth page
   return NextResponse.redirect(`${origin}/en/auth?error=auth_failed`);
 }
